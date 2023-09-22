@@ -6,7 +6,10 @@ import {
 } from "../services/userPremium.service";
 import { CreateUserPremiumInput } from "../schemas/userPremium.schema";
 
-export async function getUserPremiumHandler() {
+export async function getUserPremiumHandler(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
   try {
     const userPremium = await getUserPremiums();
     const data = {
@@ -15,7 +18,7 @@ export async function getUserPremiumHandler() {
       status: 200,
       data: userPremium,
     };
-    return data;
+    return reply.code(200).send(data);
   } catch (error) {
     const data = {
       success: false,
@@ -24,7 +27,7 @@ export async function getUserPremiumHandler() {
       status: 500,
       data: null,
     };
-    return data;
+    return reply.code(500).send(data);
   }
 }
 

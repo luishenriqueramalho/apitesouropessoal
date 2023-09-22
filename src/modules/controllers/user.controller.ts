@@ -2,7 +2,10 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { createUsers, deleteUsers, getUsers } from "../services/use.service";
 import { CreateUserInput } from "../schemas/user.schema";
 
-export async function getUserHandler() {
+export async function getUserHandler(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
   try {
     const users = await getUsers();
     const data = {
@@ -11,7 +14,7 @@ export async function getUserHandler() {
       status: 200,
       data: users,
     };
-    return data;
+    return reply.code(200).send(data);
   } catch (error) {
     const data = {
       success: false,
@@ -20,7 +23,7 @@ export async function getUserHandler() {
       status: 500,
       data: null,
     };
-    return data;
+    return reply.code(500).send(data);
   }
 }
 
