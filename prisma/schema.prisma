@@ -13,7 +13,7 @@ datasource db {
 model User {
   id             String        @id @default(cuid())
   nomeCompleto   String
-  email          String
+  email          String        @unique
   dataNascimento String
   telefone       String
   password       String

@@ -18,7 +18,7 @@ app.register(subCategoryRoutes);
 app.get("/", async (req, res) => {
   return {
     status: "Online",
-    server: "http://localhost:3333",
+    server: "http://localhost:4444",
     message: "Bem-vindo",
   };
 });
@@ -26,7 +26,7 @@ app.get("/", async (req, res) => {
 app
   .listen({
     host: "0.0.0.0",
-    port: process.env.PORT ? Number(process.env.PORT) : 3333,
+    port: process.env.PORT ? Number(process.env.PORT) : 4444,
   })
   .then(() => {
     console.log("Servidor online!");
