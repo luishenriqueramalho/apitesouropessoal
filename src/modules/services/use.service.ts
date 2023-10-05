@@ -23,10 +23,11 @@ export function deleteUsers(id: string) {
   });
 }
 
-export function findLoginByUser(email: string) {
+export function findLoginByUser(email: string, id: string) {
   return prisma.user.findUnique({
     where: {
-      email: email
-    }
-  })
+      id: id,
+      email: email,
+    },
+  });
 }
