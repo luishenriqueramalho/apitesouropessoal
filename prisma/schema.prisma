@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String        @id @default(cuid())
+  nomeCompleto   String
+  email          String        @unique
+  dataNascimento String
+  telefone       String
+  password       String
+  status         Boolean
+  createAt       DateTime      @default(now())
+  UserPremium    UserPremium[]
+  CreditCard     CreditCard[]
+  SubCategory    SubCategory[]
+}
+
+model UserPremium {
+  id             String   @id @default(cuid())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         String
+  tipoPlano      String
+  valorPagamento String
+  situacao       Boolean
+  createAt       DateTime @default(now())
+}
+
+model CreditCard {
+  id               String   @id @default(cuid())
+  nomeBanco        String
+  diaVencimento    Float
+  limiteTotal      String
+  limiteDisponivel String
+  user             User     @relation(fields: [userId], references: [id])
+  userId           String
+  createAt         DateTime @default(now())
+}
+
+model Meses {
+  id      String @id @default(cuid())
+  nomeMes String
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  nomeCategoria String
+  tipo          String
+  createAt      DateTime      @default(now())
+  SubCategory   SubCategory[]
+}
+
+model SubCategory {
+  id               String   @id @default(cuid())
+  nomeSubCategoria String
+  mesInicial       String
+  valor            String
+  createAt         DateTime @default(now())
+  category         Category @relation(fields: [categoryId], references: [id])
+  user             User     @relation(fields: [userId], references: [id])
+  categoryId       String
+  userId           String
+}
