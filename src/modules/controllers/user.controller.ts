@@ -11,6 +11,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { deleteCreditCardsByUserId } from "../services/creditCard.service";
 
+const blacklistedTokens = new Set();
+
 // CONSULTAR TODOS OS USUÁRIOS
 export async function getUserHandler(
   request: FastifyRequest,
@@ -91,6 +93,45 @@ export async function loginHandler(
       error,
     });
   }
+}
+
+// REALIZAR LOGOUT
+export async function logoutHandler(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  try {
+    const token = extractTokenFromHeader(request);
+
+    if (token) {
+      blacklistedTokens.add(token);
+
+      return reply.code(200).send({
+        success: true,
+        message: "Logout bem-sucedido!",
+      });
+    } else {
+      return reply.code(400).send({
+        success: false,
+        message: "Token de autenticação ausente!",
+      });
+    }
+  } catch (error) {
+    return reply.code(500).send({
+      success: false,
+      message: "Ocorreu um erro ao fazer logout!",
+      error,
+    });
+  }
+}
+
+// FUNÇÃO AUXILIAR PARA EXTRAIR O TOKEN DO HEADERS "AUTHORIZATION"
+function extractTokenFromHeader(request: FastifyRequest) {
+  const authHeader = request.headers["authorization"];
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.slice(7); // Remove o prefixo "Bearer "
+  }
+  return null;
 }
 
 // CRIAR UM NOVO USUÁRIO
