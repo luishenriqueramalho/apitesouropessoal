@@ -31,3 +31,11 @@ export function findLoginByUser(email: string, id: string) {
     },
   });
 }
+
+export function getUserById(id: string) {
+  return prisma.user.findUnique({
+    where: {
+      id: id,
+    },
+  });
+}

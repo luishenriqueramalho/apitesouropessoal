@@ -3,6 +3,7 @@ import {
   createUsers,
   deleteUsers,
   findLoginByUser,
+  getUserById,
   getUsers,
 } from "../services/use.service";
 import { CreateUserInput } from "../schemas/user.schema";
@@ -10,6 +11,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { deleteCreditCardsByUserId } from "../services/creditCard.service";
 
+// CONSULTAR TODOS OS USUÁRIOS
 export async function getUserHandler(
   request: FastifyRequest,
   reply: FastifyReply
@@ -35,6 +37,7 @@ export async function getUserHandler(
   }
 }
 
+// REALIZAR LOGIN
 export async function loginHandler(
   request: FastifyRequest<{
     Body: {
@@ -90,6 +93,7 @@ export async function loginHandler(
   }
 }
 
+// CRIAR UM NOVO USUÁRIO
 export async function createUserHandler(
   request: FastifyRequest<{
     Body: CreateUserInput;
@@ -124,6 +128,7 @@ export async function createUserHandler(
   }
 }
 
+// DELETAR UM USUÁRIO
 export async function deleteUserHandler(
   request: FastifyRequest<{
     Params: { id: string };
@@ -161,6 +166,49 @@ export async function deleteUserHandler(
       success: false,
       message: "Ocorreu um erro ao deletar o usuário",
       error: error.message, // Capturar a mensagem de erro específica
+    });
+  }
+}
+
+// CONSULTAR APENAS 1 USUÁRIO ESPECIFICO
+export async function getUserByIdHandler(
+  request: FastifyRequest<{
+    Params: { id: string };
+  }>,
+  reply: FastifyReply
+) {
+  try {
+    const { id } = request.params;
+
+    // Validação se o ID é uma string não vazia
+    if (!id) {
+      return reply.code(400).send({
+        success: false,
+        message: "ID inválido!",
+      });
+    }
+
+    // Buscar o usuário pelo ID
+    const user = await getUserById(id);
+
+    // Verificar se o usuário foi encontrado
+    if (!user) {
+      return reply.code(404).send({
+        success: false,
+        message: "Usuário não encontrado!",
+      });
+    }
+
+    return reply.code(200).send({
+      success: true,
+      message: "Usuário encontrado com sucesso!",
+      data: user,
+    });
+  } catch (error) {
+    return reply.code(500).send({
+      success: false,
+      message: "Ocorreu um erro ao buscar o usuário!",
+      error: error.message,
     });
   }
 }
