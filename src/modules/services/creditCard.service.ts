@@ -22,3 +22,12 @@ export function deleteCreditCard(id: string) {
     },
   });
 }
+
+// Função para excluir registros dependentes na tabela CreditCard
+export function deleteCreditCardsByUserId(userId: string) {
+  return prisma.creditCard.deleteMany({
+    where: {
+      userId: userId,
+    },
+  });
+}

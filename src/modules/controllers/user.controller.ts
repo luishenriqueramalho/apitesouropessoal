@@ -8,6 +8,7 @@ import {
 import { CreateUserInput } from "../schemas/user.schema";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { deleteCreditCardsByUserId } from "../services/creditCard.service";
 
 export async function getUserHandler(
   request: FastifyRequest,
@@ -89,13 +90,6 @@ export async function loginHandler(
   }
 }
 
-/* export const verifyToken = (token: string) => {
-  const decodedToken = jwt.verify(token, "sua_chave_secreta");
-
-  const user = findLoginByUser(decodedToken.email, decodedToken.id);
-  return user;
-}; */
-
 export async function createUserHandler(
   request: FastifyRequest<{
     Body: CreateUserInput;
@@ -137,18 +131,36 @@ export async function deleteUserHandler(
   reply: FastifyReply
 ) {
   try {
-    const { id } = request?.params;
+    const { id } = request.params;
 
-    await deleteUsers(id);
+    // Valide se o ID é uma string não vazia
+    if (!id) {
+      return reply.code(400).send({
+        success: false,
+        message: "ID inválido",
+      });
+    }
+
+    // Deletar itens vinculados ao usuário
+    await deleteCreditCardsByUserId(id);
+
+    // Tente excluir o usuário
+    const deletedUser = await deleteUsers(id);
+
+    // Verifique se o usuário foi encontrado e excluído
+    if (!deletedUser) {
+      return reply.code(404).send({
+        success: false,
+        message: "Usuário não encontrado",
+      });
+    }
+
     return reply.code(204).send();
   } catch (error) {
-    const data = {
+    return reply.code(500).send({
       success: false,
       message: "Ocorreu um erro ao deletar o usuário",
-      error: error,
-      status: 500,
-      data: null,
-    };
-    return reply.code(500).send(data);
+      error: error.message, // Capturar a mensagem de erro específica
+    });
   }
 }
