@@ -10,6 +10,8 @@ import { CreateUserInput } from "../schemas/user.schema";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { deleteCreditCardsByUserId } from "../services/creditCard.service";
+import { sendSuccess } from "../../config/objSendSuccess";
+import { sendError } from "../../config/objSendError";
 
 const blacklistedTokens = new Set();
 
@@ -20,22 +22,12 @@ export async function getUserHandler(
 ) {
   try {
     const users = await getUsers();
-    const data = {
-      success: true,
-      message: null,
-      status: 200,
-      data: users,
-    };
-    return reply.code(200).send(data);
+
+    return reply.code(200).send(sendSuccess(null, 200, users));
   } catch (error) {
-    const data = {
-      success: false,
-      message: "Ocorreu um erro ao consultar os usuários",
-      error: error,
-      status: 500,
-      data: null,
-    };
-    return reply.code(500).send(data);
+    return reply
+      .code(500)
+      .send(sendError("Ocorreu um erro ao consultar o usuário", 500, null));
   }
 }
 
@@ -56,10 +48,7 @@ export async function loginHandler(
     const user = await findLoginByUser(email, id);
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      return reply.code(401).send({
-        success: false,
-        message: "Credenciais inválidas!",
-      });
+      return reply.code(401).send(sendError("Crenciais inválidas!", 401, null));
     } else {
     }
 
@@ -71,13 +60,6 @@ export async function loginHandler(
       }
     );
 
-    const data = {
-      success: true,
-      message: "Login bem-sucedido",
-      status: 200,
-      data: token,
-    };
-
     // Configurar o cabeçalho "Authorization" com o token
     reply.header("Authorization", `Bearer ${token}`);
     reply.header("Teste", "Teste-Header");
@@ -85,13 +67,11 @@ export async function loginHandler(
     return reply
       .code(200)
       .header("Authorization", `Bearer ${token}`)
-      .send(data);
+      .send(sendSuccess("Login bem-sucedido!", 200, token));
   } catch (error) {
-    return reply.code(500).send({
-      success: false,
-      message: "Ocorreu um erro ao fazer login",
-      error,
-    });
+    return reply
+      .code(500)
+      .send(sendError("Ocorreu um erro ao fazer login", 500, null));
   }
 }
 
@@ -106,22 +86,18 @@ export async function logoutHandler(
     if (token) {
       blacklistedTokens.add(token);
 
-      return reply.code(200).send({
-        success: true,
-        message: "Logout bem-sucedido!",
-      });
+      return reply
+        .code(200)
+        .send(sendSuccess("Logout bem-sucedido!", 200, null));
     } else {
-      return reply.code(400).send({
-        success: false,
-        message: "Token de autenticação ausente!",
-      });
+      return reply
+        .code(400)
+        .send(sendError("Token de autenticação ausente!", 400, null));
     }
   } catch (error) {
-    return reply.code(500).send({
-      success: false,
-      message: "Ocorreu um erro ao fazer logout!",
-      error,
-    });
+    return reply
+      .code(500)
+      .send(sendError("Ocorreu um erro ao fazer logout!", 500, null));
   }
 }
 
@@ -138,7 +114,8 @@ function extractTokenFromHeader(request: FastifyRequest) {
 export async function createUserHandler(
   request: FastifyRequest<{
     Body: CreateUserInput;
-  }>
+  }>,
+  reply: FastifyReply
 ) {
   try {
     const { password, ...userData } = request.body;
@@ -150,22 +127,14 @@ export async function createUserHandler(
       ...userData,
       password: hashedPassword,
     });
-    const data = {
-      success: true,
-      message: "Usuário adicionado com sucesso!",
-      status: 201,
-      data: user,
-    };
-    return data;
+
+    reply
+      .code(200)
+      .send(sendSuccess("Usuário adicionado com sucesso!", 200, user));
   } catch (error) {
-    const data = {
-      success: false,
-      message: "Ocorreu um erro ao criar o usuário",
-      error: error,
-      status: 500,
-      data: null,
-    };
-    return data;
+    reply
+      .code(500)
+      .send(sendError("Ocorreu um erro ao criar o usuário!", 500, null));
   }
 }
 
@@ -181,10 +150,7 @@ export async function deleteUserHandler(
 
     // Valide se o ID é uma string não vazia
     if (!id) {
-      return reply.code(400).send({
-        success: false,
-        message: "ID inválido",
-      });
+      return reply.code(400).send(sendError("ID inválido!", 400, null));
     }
 
     // Deletar itens vinculados ao usuário
@@ -195,19 +161,18 @@ export async function deleteUserHandler(
 
     // Verifique se o usuário foi encontrado e excluído
     if (!deletedUser) {
-      return reply.code(404).send({
-        success: false,
-        message: "Usuário não encontrado",
-      });
+      return reply
+        .code(404)
+        .send(sendError("Usuário não encontrado!", 404, null));
     }
 
-    return reply.code(204).send();
+    return reply
+      .code(204)
+      .send(sendSuccess("Usuário deletado com sucesso!", 204, null));
   } catch (error) {
-    return reply.code(500).send({
-      success: false,
-      message: "Ocorreu um erro ao deletar o usuário",
-      error: error.message, // Capturar a mensagem de erro específica
-    });
+    return reply
+      .code(500)
+      .send(sendError("Ocorreu um erro ao deletar o usuário", 500, null));
   }
 }
 
@@ -223,10 +188,7 @@ export async function getUserByIdHandler(
 
     // Validação se o ID é uma string não vazia
     if (!id) {
-      return reply.code(400).send({
-        success: false,
-        message: "ID inválido!",
-      });
+      return reply.code(400).send(sendError("ID inválido!", 400, null));
     }
 
     // Buscar o usuário pelo ID
@@ -234,22 +196,17 @@ export async function getUserByIdHandler(
 
     // Verificar se o usuário foi encontrado
     if (!user) {
-      return reply.code(404).send({
-        success: false,
-        message: "Usuário não encontrado!",
-      });
+      return reply
+        .code(404)
+        .send(sendError("Usuário não encontrado", 404, null));
     }
 
-    return reply.code(200).send({
-      success: true,
-      message: "Usuário encontrado com sucesso!",
-      data: user,
-    });
+    return reply
+      .code(200)
+      .send(sendSuccess("Usuário encontrado com sucesso!", 200, user));
   } catch (error) {
-    return reply.code(500).send({
-      success: false,
-      message: "Ocorreu um erro ao buscar o usuário!",
-      error: error.message,
-    });
+    return reply
+      .code(500)
+      .send(sendError("Ocorreu um erro ao buscar o usuário!", 500, null));
   }
 }
