@@ -10,7 +10,7 @@ import {
 import { authRoutes } from "../middleware/auth.middleware";
 
 async function userRoutes(app: FastifyInstance) {
-  app.get("/api/user", authRoutes, getUserHandler);
+  app.get("/api/user", getUserHandler);
   app.get("/api/findUser/:id", authRoutes, getUserByIdHandler);
 
   app.post("/api/login", loginHandler);
