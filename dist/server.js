@@ -99,27 +99,36 @@ function deleteCreditCardsByUserId(userId) {
   });
 }
 
+// src/config/objSendSuccess.ts
+var sendSuccess = (message, status, data) => {
+  const dataSend = {
+    success: true,
+    message,
+    status,
+    data
+  };
+  return dataSend;
+};
+
+// src/config/objSendError.ts
+var sendError = (message, status, data) => {
+  const dataSend = {
+    success: false,
+    message,
+    status,
+    data
+  };
+  return dataSend;
+};
+
 // src/modules/controllers/user.controller.ts
 var blacklistedTokens = /* @__PURE__ */ new Set();
 async function getUserHandler(request, reply) {
   try {
     const users = await getUsers();
-    const data = {
-      success: true,
-      message: null,
-      status: 200,
-      data: users
-    };
-    return reply.code(200).send(data);
+    return reply.code(200).send(users);
   } catch (error) {
-    const data = {
-      success: false,
-      message: "Ocorreu um erro ao consultar os usu\xE1rios",
-      error,
-      status: 500,
-      data: null
-    };
-    return reply.code(500).send(data);
+    return reply.code(500).send(sendError("Ocorreu um erro ao consultar o usu\xE1rio", 500, null));
   }
 }
 async function loginHandler(request, reply) {
@@ -127,10 +136,7 @@ async function loginHandler(request, reply) {
     const { email, password, id } = request.body;
     const user = await findLoginByUser(email, id);
     if (!user || !await import_bcrypt.default.compare(password, user.password)) {
-      return reply.code(401).send({
-        success: false,
-        message: "Credenciais inv\xE1lidas!"
-      });
+      return reply.code(401).send(sendError("Crenciais inv\xE1lidas!", 401, null));
     } else {
     }
     const token = import_jsonwebtoken.default.sign(
@@ -140,21 +146,11 @@ async function loginHandler(request, reply) {
         expiresIn: "1h"
       }
     );
-    const data = {
-      success: true,
-      message: "Login bem-sucedido",
-      status: 200,
-      data: token
-    };
     reply.header("Authorization", `Bearer ${token}`);
     reply.header("Teste", "Teste-Header");
-    return reply.code(200).header("Authorization", `Bearer ${token}`).send(data);
+    return reply.code(200).header("Authorization", `Bearer ${token}`).send(sendSuccess("Login bem-sucedido!", 200, token));
   } catch (error) {
-    return reply.code(500).send({
-      success: false,
-      message: "Ocorreu um erro ao fazer login",
-      error
-    });
+    return reply.code(500).send(sendError("Ocorreu um erro ao fazer login", 500, null));
   }
 }
 async function logoutHandler(request, reply) {
@@ -162,22 +158,12 @@ async function logoutHandler(request, reply) {
     const token = extractTokenFromHeader(request);
     if (token) {
       blacklistedTokens.add(token);
-      return reply.code(200).send({
-        success: true,
-        message: "Logout bem-sucedido!"
-      });
+      return reply.code(200).send(sendSuccess("Logout bem-sucedido!", 200, null));
     } else {
-      return reply.code(400).send({
-        success: false,
-        message: "Token de autentica\xE7\xE3o ausente!"
-      });
+      return reply.code(400).send(sendError("Token de autentica\xE7\xE3o ausente!", 400, null));
     }
   } catch (error) {
-    return reply.code(500).send({
-      success: false,
-      message: "Ocorreu um erro ao fazer logout!",
-      error
-    });
+    return reply.code(500).send(sendError("Ocorreu um erro ao fazer logout!", 500, null));
   }
 }
 function extractTokenFromHeader(request) {
@@ -187,7 +173,7 @@ function extractTokenFromHeader(request) {
   }
   return null;
 }
-async function createUserHandler(request) {
+async function createUserHandler(request, reply) {
   try {
     const { password, ...userData } = request.body;
     const hashedPassword = await import_bcrypt.default.hash(password, 10);
@@ -195,78 +181,40 @@ async function createUserHandler(request) {
       ...userData,
       password: hashedPassword
     });
-    const data = {
-      success: true,
-      message: "Usu\xE1rio adicionado com sucesso!",
-      status: 201,
-      data: user
-    };
-    return data;
+    reply.code(200).send(sendSuccess("Usu\xE1rio adicionado com sucesso!", 200, user));
   } catch (error) {
-    const data = {
-      success: false,
-      message: "Ocorreu um erro ao criar o usu\xE1rio",
-      error,
-      status: 500,
-      data: null
-    };
-    return data;
+    reply.code(500).send(sendError("Ocorreu um erro ao criar o usu\xE1rio!", 500, null));
   }
 }
 async function deleteUserHandler(request, reply) {
   try {
     const { id } = request.params;
     if (!id) {
-      return reply.code(400).send({
-        success: false,
-        message: "ID inv\xE1lido"
-      });
+      return reply.code(400).send(sendError("ID inv\xE1lido!", 400, null));
     }
     await deleteCreditCardsByUserId(id);
     const deletedUser = await deleteUsers(id);
     if (!deletedUser) {
-      return reply.code(404).send({
-        success: false,
-        message: "Usu\xE1rio n\xE3o encontrado"
-      });
+      return reply.code(404).send(sendError("Usu\xE1rio n\xE3o encontrado!", 404, null));
     }
-    return reply.code(204).send();
+    return reply.code(204).send(sendSuccess("Usu\xE1rio deletado com sucesso!", 204, null));
   } catch (error) {
-    return reply.code(500).send({
-      success: false,
-      message: "Ocorreu um erro ao deletar o usu\xE1rio",
-      error: error.message
-      // Capturar a mensagem de erro específica
-    });
+    return reply.code(500).send(sendError("Ocorreu um erro ao deletar o usu\xE1rio", 500, null));
   }
 }
 async function getUserByIdHandler(request, reply) {
   try {
     const { id } = request.params;
     if (!id) {
-      return reply.code(400).send({
-        success: false,
-        message: "ID inv\xE1lido!"
-      });
+      return reply.code(400).send(sendError("ID inv\xE1lido!", 400, null));
     }
     const user = await getUserById(id);
     if (!user) {
-      return reply.code(404).send({
-        success: false,
-        message: "Usu\xE1rio n\xE3o encontrado!"
-      });
+      return reply.code(404).send(sendError("Usu\xE1rio n\xE3o encontrado", 404, null));
     }
-    return reply.code(200).send({
-      success: true,
-      message: "Usu\xE1rio encontrado com sucesso!",
-      data: user
-    });
+    return reply.code(200).send(sendSuccess("Usu\xE1rio encontrado com sucesso!", 200, user));
   } catch (error) {
-    return reply.code(500).send({
-      success: false,
-      message: "Ocorreu um erro ao buscar o usu\xE1rio!",
-      error: error.message
-    });
+    return reply.code(500).send(sendError("Ocorreu um erro ao buscar o usu\xE1rio!", 500, null));
   }
 }
 
@@ -294,12 +242,12 @@ var authRoutes = {
 
 // src/modules/routes/user.route.ts
 async function userRoutes(app2) {
-  app2.get("/api/user", authRoutes, getUserHandler);
-  app2.get("/api/findUser/:id", getUserByIdHandler);
+  app2.get("/api/user", getUserHandler);
+  app2.get("/api/findUser/:id", authRoutes, getUserByIdHandler);
   app2.post("/api/login", loginHandler);
   app2.post("/api/logout", logoutHandler);
   app2.post("/api/user", createUserHandler);
-  app2.delete("/api/user/:id", deleteUserHandler);
+  app2.delete("/api/user/:id", authRoutes, deleteUserHandler);
 }
 var user_route_default = userRoutes;
 
