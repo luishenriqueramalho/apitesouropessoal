@@ -23,8 +23,8 @@ export async function getUserHandler(
   try {
     const users = await getUsers();
 
-    //return reply.code(200).send(sendSuccess(null, 200, users));
-    return reply.code(200).send(users);
+    return reply.code(200).send(sendSuccess(null, 200, users));
+    //return reply.code(200).send(users);
   } catch (error) {
     return reply
       .code(500)
